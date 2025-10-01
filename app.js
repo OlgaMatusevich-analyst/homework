@@ -116,51 +116,65 @@ function missingPercents(rows) {
   return out;
 }
 
-// Рисуем столбики прямо в нашем блоке EDA, без правой панели Visor.
-// С защитами + текстовый фолбэк, если канвас не отрисовался.
+// Простые столбики в нашем блоке EDA без tfjs-vis
 async function renderSimpleBars(containerId, title, labels, values) {
-  try { if (window.tfvis?.visor) tfvis.visor().close(); } catch (e) { /* ignore */ }
-
   const host = document.getElementById(containerId);
+
   // Заголовок мини-графика
   const cap = document.createElement('div');
   cap.textContent = title;
-  cap.style.margin = '6px 0 2px';
+  cap.style.margin = '8px 0 4px';
   cap.style.fontWeight = '600';
   host.appendChild(cap);
 
-  // Контейнер под график
-  const holder = document.createElement('div');
-  holder.style.height = '220px';
-  holder.style.border = '1px dashed #e5e7eb';
-  holder.style.borderRadius = '8px';
-  holder.style.padding = '6px';
-  holder.style.background = '#fafafa';
-  host.appendChild(holder);
+  // Обёртка под «диаграмму»
+  const box = document.createElement('div');
+  box.style.border = '1px dashed #e5e7eb';
+  box.style.borderRadius = '12px';
+  box.style.padding = '8px 10px';
+  box.style.background = '#fafafa';
+  box.style.marginBottom = '10px';
+  host.appendChild(box);
 
-  // tfjs-vis для bar ожидает {label, value}; численные значения защищаем
-  const clean = labels.map((l, i) => ({
-    label: String(l),
-    value: Number.isFinite(Number(values[i])) ? Number(values[i]) : 0
-  }));
+  for (let i = 0; i < labels.length; i++) {
+    const lab = String(labels[i]);
+    const val = Number(values[i]);
+    const v = Number.isFinite(val) ? Math.max(0, Math.min(1, val)) : 0;
 
-  try {
-    await tfvis.render.barchart(
-      holder,
-      { values: clean },
-      { yLabel: 'Rate', height: 200 }
-    );
-  } catch (e) {
-    console.warn('tfjs-vis barchart failed, falling back to text', e);
-  }
+    const row = document.createElement('div');
+    row.style.display = 'grid';
+    row.style.gridTemplateColumns = '110px 1fr 60px';
+    row.style.alignItems = 'center';
+    row.style.gap = '8px';
+    row.style.margin = '4px 0';
 
-  // Фолбэк: если график не нарисовался (ни canvas, ни svg), покажем текстом
-  if (!holder.querySelector('canvas,svg')) {
-    holder.innerHTML = `<pre style="margin:0; font-family:ui-monospace,Menlo,Consolas,monospace">
-${clean.map(r => `${r.label}: ${r.value.toFixed ? r.value.toFixed(3) : r.value}`).join('\n')}
-</pre>`;
+    const l = document.createElement('div');
+    l.textContent = lab;
+
+    const barWrap = document.createElement('div');
+    barWrap.style.height = '12px';
+    barWrap.style.background = '#eee';
+    barWrap.style.borderRadius = '6px';
+
+    const bar = document.createElement('div');
+    bar.style.height = '100%';
+    bar.style.width = `${(v * 100).toFixed(1)}%`;
+    bar.style.borderRadius = '6px';
+    bar.style.background = '#60a5fa';
+    barWrap.appendChild(bar);
+
+    const num = document.createElement('div');
+    num.textContent = v.toFixed(3);
+    num.style.textAlign = 'right';
+    num.style.fontFamily = 'ui-monospace,Menlo,Consolas,monospace';
+
+    row.appendChild(l);
+    row.appendChild(barWrap);
+    row.appendChild(num);
+    box.appendChild(row);
   }
 }
+
 
 
 function survivalRateBy(rows, key) {
