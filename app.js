@@ -116,16 +116,33 @@ function missingPercents(rows) {
   return out;
 }
 
-async function renderSimpleBars(container, title, labels, values) {
-  const data = [{ name:title, values: labels.map((l,i)=>({x:l, y:values[i]})) }];
+// Draw bar chart directly in our container (no right Visor panel).
+async function renderSimpleBars(containerId, title, labels, values) {
+  // Закрыть правую панель tfjs-vis, чтобы график не "улетал"
+  tfvis.visor().close();
+
+  // Контейнер внутри нашего блока EDA
+  const host = document.getElementById(containerId);
+  const holder = document.createElement('div');
+  holder.style.height = '260px';
+  holder.style.margin = '8px 0';
+  host.appendChild(holder);
+
+  // ВАЖНО: для barchart tfjs-vis ждёт {label, value}, а не {x, y}
+  const data = {
+    values: labels.map((l, i) => ({
+      label: String(l),
+      value: Number(values[i])
+    }))
+  };
+
   await tfvis.render.barchart(
-    {name:title, tab: 'EDA', styles:{height:250}}, data, {xLabel:'', yLabel:'Rate', width:420}
-  );
-  // Also clone the latest tfvis surface into our container
-  document.getElementById(container).appendChild(
-    document.querySelector('[data-name="'+title+'"]').parentElement.parentElement
+    holder,
+    data,
+    { xLabel: '', yLabel: 'Rate', height: 240 }
   );
 }
+
 
 function survivalRateBy(rows, key) {
   const counts = {}; // {category: {n:count, s:survivedCount}}
@@ -433,18 +450,34 @@ document.getElementById('testCsv').addEventListener('change', async e => {
   } catch (err) { alertError('Failed to parse test.csv', err); }
 });
 
+// Обработчик кнопки "Inspect data"
 document.getElementById('btnInspect').addEventListener('click', () => {
-  if (!TRAIN_ROWS.length) return alert('Load train.csv first');
+  // 1) Проверяем, что train.csv загружен
+  if (!TRAIN_ROWS.length) { 
+    alert('Load train.csv first'); 
+    return; 
+  }
+
+  // 2) Закрываем правую панель tfjs-vis (Visor), чтобы график не "улетал" вправо
+  tfvis.visor().close();
+
+  // 3) Очищаем наш левый блок EDA перед перерисовкой
+  document.getElementById('edaCharts').innerHTML = '';
+
+  // 4) Информация о данных (shape + проценты пропусков)
   const miss = missingPercents(TRAIN_ROWS);
   const shape = `${TRAIN_ROWS.length} rows × ${Object.keys(TRAIN_ROWS[0]).length} cols`;
   setHTML('previewInfo', `Shape: ${shape}\nMissing %: ` + JSON.stringify(miss, null, 2));
 
+  // 5) Считаем долю выживших по Sex и по Pclass
   const bySex = survivalRateBy(TRAIN_ROWS, 'Sex');
   const byClass = survivalRateBy(TRAIN_ROWS, 'Pclass');
-  document.getElementById('edaCharts').innerHTML = '';
-  renderSimpleBars('edaCharts','Survival by Sex', bySex.labels, bySex.values);
-  renderSimpleBars('edaCharts','Survival by Pclass', byClass.labels, byClass.values);
+
+  // 6) Рисуем столбики прямо в нашем блоке (используется обновлённый renderSimpleBars)
+  renderSimpleBars('edaCharts', 'Survival by Sex', bySex.labels, bySex.values);
+  renderSimpleBars('edaCharts', 'Survival by Pclass', byClass.labels, byClass.values);
 });
+
 
 document.getElementById('btnPreprocess').addEventListener('click', () => {
   if (!TRAIN_ROWS.length) return alert('Load train.csv first');
