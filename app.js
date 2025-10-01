@@ -116,31 +116,50 @@ function missingPercents(rows) {
   return out;
 }
 
-// Draw bar chart directly in our container (no right Visor panel).
+// Рисуем столбики прямо в нашем блоке EDA, без правой панели Visor.
+// С защитами + текстовый фолбэк, если канвас не отрисовался.
 async function renderSimpleBars(containerId, title, labels, values) {
-  // Закрыть правую панель tfjs-vis, чтобы график не "улетал"
-  tfvis.visor().close();
+  try { if (window.tfvis?.visor) tfvis.visor().close(); } catch (e) { /* ignore */ }
 
-  // Контейнер внутри нашего блока EDA
   const host = document.getElementById(containerId);
+  // Заголовок мини-графика
+  const cap = document.createElement('div');
+  cap.textContent = title;
+  cap.style.margin = '6px 0 2px';
+  cap.style.fontWeight = '600';
+  host.appendChild(cap);
+
+  // Контейнер под график
   const holder = document.createElement('div');
-  holder.style.height = '260px';
-  holder.style.margin = '8px 0';
+  holder.style.height = '220px';
+  holder.style.border = '1px dashed #e5e7eb';
+  holder.style.borderRadius = '8px';
+  holder.style.padding = '6px';
+  holder.style.background = '#fafafa';
   host.appendChild(holder);
 
-  // ВАЖНО: для barchart tfjs-vis ждёт {label, value}, а не {x, y}
-  const data = {
-    values: labels.map((l, i) => ({
-      label: String(l),
-      value: Number(values[i])
-    }))
-  };
+  // tfjs-vis для bar ожидает {label, value}; численные значения защищаем
+  const clean = labels.map((l, i) => ({
+    label: String(l),
+    value: Number.isFinite(Number(values[i])) ? Number(values[i]) : 0
+  }));
 
-  await tfvis.render.barchart(
-    holder,
-    data,
-    { xLabel: '', yLabel: 'Rate', height: 240 }
-  );
+  try {
+    await tfvis.render.barchart(
+      holder,
+      { values: clean },
+      { yLabel: 'Rate', height: 200 }
+    );
+  } catch (e) {
+    console.warn('tfjs-vis barchart failed, falling back to text', e);
+  }
+
+  // Фолбэк: если график не нарисовался (ни canvas, ни svg), покажем текстом
+  if (!holder.querySelector('canvas,svg')) {
+    holder.innerHTML = `<pre style="margin:0; font-family:ui-monospace,Menlo,Consolas,monospace">
+${clean.map(r => `${r.label}: ${r.value.toFixed ? r.value.toFixed(3) : r.value}`).join('\n')}
+</pre>`;
+  }
 }
 
 
@@ -452,29 +471,28 @@ document.getElementById('testCsv').addEventListener('change', async e => {
 
 // Обработчик кнопки "Inspect data"
 document.getElementById('btnInspect').addEventListener('click', () => {
-  // 1) Проверяем, что train.csv загружен
-  if (!TRAIN_ROWS.length) { 
-    alert('Load train.csv first'); 
-    return; 
-  }
+  if (!TRAIN_ROWS.length) { alert('Load train.csv first'); return; }
 
-  // 2) Закрываем правую панель tfjs-vis (Visor), чтобы график не "улетал" вправо
-  tfvis.visor().close();
+  // Закрыть возможный Visor и очистить левый блок EDA
+  try { if (window.tfvis?.visor) tfvis.visor().close(); } catch (_) {}
+  const eda = document.getElementById('edaCharts');
+  eda.innerHTML = '';
 
-  // 3) Очищаем наш левый блок EDA перед перерисовкой
-  document.getElementById('edaCharts').innerHTML = '';
-
-  // 4) Информация о данных (shape + проценты пропусков)
+  // Информация о данных (shape + % пропусков)
   const miss = missingPercents(TRAIN_ROWS);
   const shape = `${TRAIN_ROWS.length} rows × ${Object.keys(TRAIN_ROWS[0]).length} cols`;
   setHTML('previewInfo', `Shape: ${shape}\nMissing %: ` + JSON.stringify(miss, null, 2));
 
-  // 5) Считаем долю выживших по Sex и по Pclass
-  const bySex = survivalRateBy(TRAIN_ROWS, 'Sex');
-  const byClass = survivalRateBy(TRAIN_ROWS, 'Pclass');
+  // Доли выживших по Sex и по Pclass
+  const bySex   = survivalRateBy(TRAIN_ROWS, 'Sex');     // labels, values
+  const byClass = survivalRateBy(TRAIN_ROWS, 'Pclass');  // labels, values
 
-  // 6) Рисуем столбики прямо в нашем блоке (используется обновлённый renderSimpleBars)
-  renderSimpleBars('edaCharts', 'Survival by Sex', bySex.labels, bySex.values);
+  // На всякий случай лог в консоль (можно удалить)
+  console.log('BySex', bySex);
+  console.log('ByPclass', byClass);
+
+  // Рисуем два мини-графика в EDA
+  renderSimpleBars('edaCharts', 'Survival by Sex',    bySex.labels,   bySex.values);
   renderSimpleBars('edaCharts', 'Survival by Pclass', byClass.labels, byClass.values);
 });
 
