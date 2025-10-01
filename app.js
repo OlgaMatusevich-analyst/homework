@@ -148,8 +148,7 @@ async function renderSimpleBars(containerId, title, labels, values) {
     row.style.gap = '8px';
     row.style.margin = '4px 0';
 
-    const l = document.createElement('div');
-    l.textContent = lab;
+    const l = document.createElement('div'); l.textContent = lab;
 
     const barWrap = document.createElement('div');
     barWrap.style.height = '12px';
@@ -174,6 +173,8 @@ async function renderSimpleBars(containerId, title, labels, values) {
     box.appendChild(row);
   }
 }
+
+
 
 
 
@@ -505,10 +506,9 @@ document.getElementById('btnInspect').addEventListener('click', () => {
   console.log('BySex', bySex);
   console.log('ByPclass', byClass);
 
-  // Рисуем два мини-графика в EDA
-  renderSimpleBars('edaCharts', 'Survival by Sex',    bySex.labels,   bySex.values);
-  renderSimpleBars('edaCharts', 'Survival by Pclass', byClass.labels, byClass.values);
-});
+renderSimpleBars('edaCharts', 'Survival by Sex', bySex.labels, bySex.values);
+renderSimpleBars('edaCharts', 'Survival by Pclass', byClass.labels, byClass.values);
+
 
 
 document.getElementById('btnPreprocess').addEventListener('click', () => {
