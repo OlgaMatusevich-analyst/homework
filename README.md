@@ -4,10 +4,12 @@ Prompt for this:
 
 Hello! 
 I'm a student in the "Neural Networks and Deep Learning" course, and I was given homework to create a web application and fix any errors that might appear. For this, I'm attaching the prompt you need to use to create the application, along with course presentations and a screenshot highlighting the errors you need to avoid. I'm also attaching the datasets that will be used to create the model and a link to my GitHub account (https://github.com/OlgaMatusevich-analyst). 
+
 Complete the assignment using this script and the description in the presentation + CORRECT ALL ERRORS in the presentation. Prompt " Output two separate code files: first index.html (for HTML structure and UI), second app.js (for JavaScript logic). 
+
 The app is a shallow binary classifier on Kaggle Titanic dataset using TensorFlow.js, running entirely in the browser (no server), ready for GitHub Pages. Use TensorFlow.js CDN 'https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest' and tfjs-vis CDN 'https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-vis@latest'. Link app.js from index.html. Follow this workflow: 
 
-1.**Layout in index.html**: Sections for Data Load, Preprocessing, Model, Training, Metrics (ROC-AUC slider), Prediction, Export. Add file inputs for train.csv/test.csv. Use basic CSS for responsiveness. 
+ 1.**Layout in index.html**: Sections for Data Load, Preprocessing, Model, Training, Metrics (ROC-AUC slider), Prediction, Export. Add file inputs for train.csv/test.csv. Use basic CSS for responsiveness. 
 
 2. **Data Schema in app.js**: Target: Survived (0/1). Features: Pclass, Sex, Age, SibSp, Parch, Fare, Embarked. Identifier: PassengerId (exclude). // Reuse note: Swap schema for other datasets. 
 
