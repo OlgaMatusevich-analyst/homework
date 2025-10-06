@@ -25,4 +25,6 @@ The app is a shallow binary classifier on Kaggle Titanic dataset using TensorFlo
 
 8. **Inference & Export in app.js**: Predict test.csv probs; apply threshold for Survived; download submission.csv (PassengerId, Survived), probabilities.csv; model.save('downloads://titanic-tfjs'). 
 
-9. **Deployment Notes in index.html**: Add text: 'Create public GitHub repo, commit index.html/app.js, enable Pages (main/root), test URL.' Include English comments in code. Make interactive with buttons (Train, Evaluate, Predict). Handle errors (e.g., alerts for missing files/invalid data). Ensure reusable by commenting schema swap points. "
+9. **Deployment Notes in index.html**: Add text: 'Create public GitHub repo, commit index.html/app.js, enable Pages (main/root), test URL.'
+
+Include English comments in code. Make interactive with buttons (Train, Evaluate, Predict). Handle errors (e.g., alerts for missing files/invalid data). Ensure reusable by commenting schema swap points. "
